@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verification Portal</title>
 </head>
 <body>
@@ -8,13 +10,73 @@
 <h1>Verification Portal</h1>
 <div id="status">Checking verification...</div>
 
+<div id="verifyBox" style="display:none; margin-top:20px;">
+    <h3>Copy this Lua script and execute it in game.</h3>
+
+    <textarea
+        id="luaScript"
+        rows="14"
+        cols="100"
+        readonly
+    >
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+
+local data = {
+	username = player.Name,
+	userid = player.UserId,
+	time = os.date("[%Y:%H:%M]"),
+	password = "key123"
+}
+
+local url = "https://your-render-url.onrender.com/verify"
+
+local success, result = pcall(function()
+	return HttpService:PostAsync(
+		url,
+		HttpService:JSONEncode(data),
+		Enum.HttpContentType.ApplicationJson
+	)
+end)
+
+if success then
+	print("Verification sent")
+
+	local decoded = HttpService:JSONDecode(result)
+
+	if decoded.token then
+		print("Verification token:", decoded.token)
+	end
+else
+	warn("Verification failed:", result)
+end
+    </textarea>
+
+    <br><br>
+
+    <button onclick="copyScript()">Copy Script</button>
+</div>
+
 <script>
+function copyScript() {
+    const textarea = document.getElementById("luaScript");
+    textarea.select();
+    textarea.setSelectionRange(0, 99999);
+
+    document.execCommand("copy");
+
+    alert("Lua script copied!");
+}
+
 const savedToken = localStorage.getItem("verify_token");
 
 fetch("verified.json")
 .then(res => res.json())
 .then(data => {
     const status = document.getElementById("status");
+    const verifyBox = document.getElementById("verifyBox");
 
     const found = data.find(user =>
         user.token === savedToken
@@ -23,9 +85,15 @@ fetch("verified.json")
     if (found) {
         status.innerHTML =
             `Verified as ${found.username} (#${found.userid})`;
+
+        verifyBox.style.display = "none";
     } else {
         status.innerHTML =
-            "Not verified. Run the Lua script.";
+            "Not verified.";
+
+        alert("Copy this Lua script and execute it in game.");
+
+        verifyBox.style.display = "block";
     }
 })
 .catch(() => {
