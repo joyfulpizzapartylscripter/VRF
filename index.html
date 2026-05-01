@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verification Portal</title>
+</head>
+<body>
+
+<h1>Verification Portal</h1>
+<div id="status">Checking verification...</div>
+
+<script>
+const savedToken = localStorage.getItem("verify_token");
+
+fetch("verified.json")
+.then(res => res.json())
+.then(data => {
+    const status = document.getElementById("status");
+
+    const found = data.find(user =>
+        user.token === savedToken
+    );
+
+    if (found) {
+        status.innerHTML =
+            `Verified as ${found.username} (#${found.userid})`;
+    } else {
+        status.innerHTML =
+            "Not verified. Run the Lua script.";
+    }
+})
+.catch(() => {
+    document.getElementById("status").innerHTML =
+        "Error loading verification.";
+});
+</script>
+
+</body>
+</html>
